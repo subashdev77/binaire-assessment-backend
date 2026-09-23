@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: binaire-assessment-backend
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /api/queue
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
