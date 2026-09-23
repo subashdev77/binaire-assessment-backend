@@ -2,7 +2,7 @@ services:
   - type: web
     name: binaire-assessment-backend
     runtime: node
-    buildCommand: npm ci --include=dev && npm run build
+    buildCommand: npm ci
     startCommand: node dist/server.js
     healthCheckPath: /api/queue
     envVars:
