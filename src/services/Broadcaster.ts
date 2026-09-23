@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server as HttpServer } from 'http';
 
-export type BroadcastEventType = 
+export type BroadcastEventType =
   | 'QUEUE_SNAPSHOT'
   | 'JOB_STATUS_CHANGED'
   | 'JOB_PROGRESS'
@@ -16,10 +16,6 @@ export interface BroadcastMessage {
   timestamp: number;
 }
 
-/**
- * Real-time event broadcasting service using WebSockets.
- * Broadcasts system and queue state to all connected client machines.
- */
 export class Broadcaster {
   private wss: WebSocketServer | null = null;
   private clients: Set<WebSocket> = new Set();
@@ -39,7 +35,6 @@ export class Broadcaster {
         this.clients.delete(ws);
       });
 
-      // Send initial hello
       this.sendToClient(ws, {
         type: 'SYSTEM_METRICS',
         payload: { connectedClients: this.clients.size, message: 'Connected to Queue Engine' },

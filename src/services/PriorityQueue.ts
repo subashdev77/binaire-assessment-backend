@@ -7,10 +7,6 @@ export interface QueueMetrics {
   averageWaitTimeMs: number;
 }
 
-/**
- * PriorityQueue implementation using Object-Oriented principles.
- * Incorporates Dynamic Aging to eliminate starvation and priority inversion deadlocks.
- */
 export class PriorityQueue {
   private items: Job[] = [];
   private agingIntervalMs: number;
@@ -21,11 +17,6 @@ export class PriorityQueue {
     this.agingPoints = agingPoints;
   }
 
-  /**
-   * Enqueue a job according to effective priority score.
-   * Higher score = processed sooner.
-   * If scores are identical, FIFO (order of arrival) is preserved.
-   */
   public enqueue(job: Job): void {
     job.markQueued();
     let added = false;
@@ -43,23 +34,14 @@ export class PriorityQueue {
     }
   }
 
-  /**
-   * Dequeues the highest priority job from the queue.
-   */
   public dequeue(): Job | undefined {
     return this.items.shift();
   }
 
-  /**
-   * Peek at the next job to be scheduled without removing it.
-   */
   public peek(): Job | undefined {
     return this.items[0];
   }
 
-  /**
-   * Remove a job by ID (e.g. cancellation).
-   */
   public remove(jobId: string): Job | null {
     const index = this.items.findIndex(item => item.id === jobId);
     if (index !== -1) {
@@ -69,11 +51,6 @@ export class PriorityQueue {
     return null;
   }
 
-  /**
-   * Starvation & Deadlock Prevention:
-   * Periodically ages waiting jobs. If low-priority jobs wait too long,
-   * their effective priority score increases, eventually surpassing higher-priority incoming jobs.
-   */
   public applyAging(): boolean {
     if (this.items.length === 0) return false;
     let scoreChanged = false;
@@ -89,7 +66,7 @@ export class PriorityQueue {
     }
 
     if (scoreChanged) {
-      // Re-sort based on new effective scores, maintaining stability
+
       this.items.sort((a, b) => {
         if (b.effectivePriorityScore !== a.effectivePriorityScore) {
           return b.effectivePriorityScore - a.effectivePriorityScore;

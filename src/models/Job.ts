@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export type JobPriority = 'HIGH' | 'LOW';
 
-export type JobStatus = 
+export type JobStatus =
   | 'UPLOADING'
   | 'UPLOADED'
   | 'QUEUED'
@@ -75,7 +75,7 @@ export class Job {
     this.filePath = filePath;
     this.fileSize = fileSize;
     this.priority = priority;
-    // Base score: HIGH = 1000, LOW = 100
+
     this.effectivePriorityScore = priority === 'HIGH' ? 1000 : 100;
     this.status = 'UPLOADED';
     this.createdAt = Date.now();
@@ -123,10 +123,6 @@ export class Job {
     this.completedAt = Date.now();
   }
 
-  /**
-   * Aging mechanism to prevent starvation and deadlocks for LOW priority jobs.
-   * As time passes in queue, the effective score increases.
-   */
   public age(increment: number = 10): void {
     if (this.priority === 'LOW' && this.status === 'QUEUED') {
       this.effectivePriorityScore += increment;

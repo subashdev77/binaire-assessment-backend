@@ -22,11 +22,6 @@ export interface WorkerPoolCallbacks {
   onError: (jobId: string, error: string) => void;
 }
 
-/**
- * WorkerPool service implementing OOP resource isolation & management.
- * Pre-allocates worker threads to prevent thread creation bottlenecks,
- * provides deadlock-free thread scheduling, and automatically recovers crashed workers.
- */
 export class WorkerPool {
   private poolSize: number;
   private workers: Map<number, { worker: Worker; info: WorkerInfo }> = new Map();
@@ -36,12 +31,10 @@ export class WorkerPool {
   constructor(poolSize: number = Math.max(2, Math.min(8, os.cpus().length)), callbacks: WorkerPoolCallbacks) {
     this.poolSize = poolSize;
     this.callbacks = callbacks;
-    
-    // Resolve worker script path
-    // For tsx/ts execution vs compiled js execution
+
     const currentDir = path.dirname(fileURLToPath(import.meta.url));
     const isTs = process.argv.some(arg => arg.endsWith('.ts')) || process.execArgv.some(arg => arg.includes('tsx') || arg.includes('ts-node'));
-    
+
     if (isTs) {
       this.workerScriptPath = path.resolve(currentDir, '../workers/csvWorker.ts');
     } else {
@@ -59,8 +52,7 @@ export class WorkerPool {
 
   private spawnWorker(id: number): void {
     const isTs = this.workerScriptPath.endsWith('.ts');
-    
-    // If running in TS dev mode with tsx, pass loader options to worker thread
+
     const worker = new Worker(this.workerScriptPath, {
       execArgv: isTs ? ['--import', 'tsx'] : []
     });
@@ -128,10 +120,6 @@ export class WorkerPool {
     }
   }
 
-  /**
-   * Dispatches a job to an idle worker thread.
-   * Returns workerId if dispatched, or null if all workers are busy.
-   */
   public dispatch(job: Job): number | null {
     for (const [id, entry] of this.workers.entries()) {
       if (entry.info.status === 'IDLE') {

@@ -20,19 +20,15 @@ export interface SystemSnapshot {
   };
 }
 
-/**
- * QueueManager: Central Object-Oriented Orchestrator for scheduling,
- * multi-user dispatching, deadlock mitigation, and real-time synchronization.
- */
 export class QueueManager {
   private queue: PriorityQueue;
   private workerPool: WorkerPool;
   private broadcaster: Broadcaster;
-  
+
   private allJobs: Map<string, Job> = new Map();
   private activeJobs: Map<string, Job> = new Map();
   private completedJobs: Job[] = [];
-  
+
   private totalProcessedCount: number = 0;
   private totalFailedCount: number = 0;
   private startTime: number = Date.now();
@@ -41,11 +37,11 @@ export class QueueManager {
 
   constructor(broadcaster: Broadcaster, poolSize?: number) {
     this.broadcaster = broadcaster;
-    this.queue = new PriorityQueue(1500, 30); // Dynamic aging every 1.5s (+30 pts)
+    this.queue = new PriorityQueue(1500, 30);
 
     this.workerPool = new WorkerPool(poolSize, {
       onProgress: (jobId: string, progress: number) => this.handleJobProgress(jobId, progress),
-      onComplete: (jobId: string, resultSum: number, totalNumbers: number, rank: JobRank) => 
+      onComplete: (jobId: string, resultSum: number, totalNumbers: number, rank: JobRank) =>
         this.handleJobComplete(jobId, resultSum, totalNumbers, rank),
       onError: (jobId: string, error: string) => this.handleJobError(jobId, error)
     });
@@ -54,7 +50,7 @@ export class QueueManager {
   }
 
   private startSchedulingLoops(): void {
-    // Continuous dynamic aging loop (prevents starvation deadlocks)
+
     this.agingTimer = setInterval(() => {
       const aged = this.queue.applyAging();
       if (aged) {
@@ -62,15 +58,11 @@ export class QueueManager {
       }
     }, 1500);
 
-    // Continuous dispatch ticker
     this.scheduleTimer = setInterval(() => {
       this.processNextInQueue();
     }, 100);
   }
 
-  /**
-   * Accepts and enqueues a new file job from any user.
-   */
   public addJob(
     userId: string,
     originalFilename: string,
@@ -82,27 +74,21 @@ export class QueueManager {
     const job = new Job(userId, originalFilename, storedFilename, filePath, fileSize, priority);
     this.allJobs.set(job.id, job);
 
-    // Add to priority queue
     this.queue.enqueue(job);
 
     this.broadcaster.broadcast('JOB_STATUS_CHANGED', job.toJSON());
     this.broadcastSnapshot();
 
-    // Trigger immediate scheduling attempt
     this.processNextInQueue();
 
     return job;
   }
 
-  /**
-   * Schedules the next job if workers are available.
-   */
   public processNextInQueue(): void {
     while (this.workerPool.hasAvailableWorker() && !this.queue.isEmpty()) {
       const job = this.queue.dequeue();
       if (!job) break;
 
-      // Mark waiting / preparing
       job.markWaiting();
       this.broadcaster.broadcast('JOB_STATUS_CHANGED', job.toJSON());
 
@@ -112,7 +98,7 @@ export class QueueManager {
         this.activeJobs.set(job.id, job);
         this.broadcaster.broadcast('JOB_STATUS_CHANGED', job.toJSON());
       } else {
-        // If worker dispatch failed unexpectedly, re-insert at top of queue
+
         this.queue.enqueue(job);
         break;
       }
@@ -138,7 +124,7 @@ export class QueueManager {
       this.activeJobs.delete(jobId);
       this.completedJobs.unshift(job);
       if (this.completedJobs.length > 100) {
-        this.completedJobs.pop(); // keep last 100
+        this.completedJobs.pop();
       }
       this.totalProcessedCount++;
 
